@@ -1,0 +1,42 @@
+# IDEA EDU Course ...
+
+Implemented in the Java Developer Track of hyperskill.org's JetBrain Academy.
+
+Purpose of doing this project, is to further practise core java topics as multi-threading, a socket,
+server-socket server-client application, the Gson and Jcommander libraries and some more POJO java.
+
+This is a graduate project of the Java Developer Track.
+
+## Technology / External Libraries
+
+- POJO Java 18,
+- Socket & ServerSocket - connection between server and client(s)
+- multi-threading with Java Executor-Service (Java-core .util.concurrent)
+- Apache GSON library
+- JCommander library to parse CL-arguments
+- Apache Log4j SLF4J API binding to Log4j 2 logging and
+- Junit 5 with
+- Mockito (mockito-inline) testing.
+
+## Repository Contents
+
+The sources of main project tasks (6 stages) and unit, mockito testing.
+
+## Program description
+
+A server-client(s) application that simulates the Json storage and retrieval in a server-side
+Json-database. The DB-realization is done via array (later stages Json-file) and the
+Client-Server connection is "low-level" build via Socket to ServerSocket connections.
+
+Have fun!
+
+## Project completion
+
+Project was completed on 20.09.22.
+
+## Progress
+
+24.09.22 Project started - git repo and gradle setup.
+
+24.09.22 Stage 1 completed - a cell database simulated by y string array. Some CL commands to set, get and delete in 
+the 'database'.

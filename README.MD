@@ -32,7 +32,7 @@ Have fun!
 
 ## Project completion
 
-Project was completed on 20.09.22.
+[//]: # (Project was completed on 20.09.22.)
 
 ## Progress
 

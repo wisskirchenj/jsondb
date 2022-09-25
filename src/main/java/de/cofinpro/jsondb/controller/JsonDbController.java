@@ -6,7 +6,6 @@ import de.cofinpro.jsondb.model.CellDatabase;
 import java.util.Scanner;
 
 import static de.cofinpro.jsondb.config.MessageResourceBundle.ERROR_MSG;
-import static de.cofinpro.jsondb.config.MessageResourceBundle.UNKNOWN_COMMAND_MSG;
 
 /**
  * controller class that is called by main via run() entry point. It does the command loop and calls the cell database.
@@ -47,7 +46,7 @@ public class JsonDbController {
             case "set" -> jsonDb.set(index, tokens.length < 3 ? "" : tokens[2]);
             case "get" -> jsonDb.get(index);
             case "delete" -> jsonDb.delete(index);
-            default -> UNKNOWN_COMMAND_MSG;
+            default -> ERROR_MSG;
         });
     }
 

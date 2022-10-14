@@ -15,14 +15,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SocketCommunicationIT {
@@ -90,5 +90,12 @@ class SocketCommunicationIT {
         assertEquals(MessageResourceBundle.STARTED_MSG, serverOutput.get(0));
         assertEquals("Received: something", serverOutput.get(1));
         assertEquals("Sent: " + MessageResourceBundle.INVALID_REQUEST_MSG, serverOutput.get(2));
+    }
+
+
+    @Test
+    void whenSendCalledWithoutServer_ConnectExceptionThrown() {
+        assertThrows(ConnectException.class, () -> new ClientController(printer).send());
+        verify(printer, never()).printInfo(anyString());
     }
 }

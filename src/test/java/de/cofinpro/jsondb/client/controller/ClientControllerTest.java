@@ -9,12 +9,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.net.ConnectException;
 import java.util.Scanner;
 
 import static de.cofinpro.jsondb.client.config.MessageResourceBundle.ERROR_MSG;
 import static de.cofinpro.jsondb.client.config.MessageResourceBundle.OK_MSG;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,11 +60,5 @@ class ClientControllerTest {
         when(scannerMock.nextLine()).thenReturn(input,"exit");
         controller.run(scannerMock);
         verify(printerMock).printInfo(OK_MSG);
-    }
-
-    @Test
-    void whenSendCalledWithoutServer_ConnectExceptionThrown() {
-        assertThrows(ConnectException.class, () -> controller.send());
-        verify(printerMock, never()).printInfo(anyString());
     }
 }

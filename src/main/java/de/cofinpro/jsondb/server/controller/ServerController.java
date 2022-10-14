@@ -35,6 +35,7 @@ public class ServerController {
     public void run() throws IOException {
         startServer();
         acceptOneClient();
+        server.close();
     }
 
     /**

@@ -7,8 +7,6 @@ import de.cofinpro.jsondb.server.config.MessageResourceBundle;
 import de.cofinpro.jsondb.server.controller.ServerController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -21,12 +19,13 @@ import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-@Execution(ExecutionMode.SAME_THREAD)
 @ExtendWith(MockitoExtension.class)
 class SocketCommunicationIT {
 
@@ -39,7 +38,7 @@ class SocketCommunicationIT {
     ServerController server;
 
     @Test
-    void whenClientConnects_ServerResponds() throws IOException {
+    void whenClientConnects_ServerResponds() throws IOException, InterruptedException {
         server = new ServerController(printer);
         startServerThread();
         new ClientController(new ConsolePrinter()).send();
@@ -53,7 +52,7 @@ class SocketCommunicationIT {
         assertTrue(serverOutput.get(2).contains(" was sent"));
     }
 
-    private void startServerThread() {
+    private void startServerThread() throws InterruptedException {
         new Thread(() -> {
             try {
                 server.run();
@@ -61,10 +60,12 @@ class SocketCommunicationIT {
                 throw new RuntimeException(e);
             }
         }).start();
+        final CountDownLatch waiter = new CountDownLatch(1);
+        assertFalse(waiter.await(10, TimeUnit.MILLISECONDS));
     }
 
     @Test
-    void whenClientConnectsToServer_ClientGetsAnswer() throws IOException {
+    void whenClientConnectsToServer_ClientGetsAnswer() throws IOException, InterruptedException {
         server = new ServerController(new ConsolePrinter());
         startServerThread();
         new ClientController(printer).send();
@@ -80,7 +81,7 @@ class SocketCommunicationIT {
 
 
     @Test
-    void whenClientSendsInvalidRequest_ServerRespondsWithInvalidMessage() throws IOException {
+    void whenClientSendsInvalidRequest_ServerRespondsWithInvalidMessage() throws IOException, InterruptedException {
         server = new ServerController(printer);
         startServerThread();
         try (Socket mockClient = new Socket(InetAddress.getByName(SocketConfig.getSERVER_ADDRESS()),

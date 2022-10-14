@@ -1,9 +1,9 @@
-package de.cofinpro.jsondb.model;
+package de.cofinpro.jsondb.server.model;
 
 import java.util.Arrays;
 
-import static de.cofinpro.jsondb.config.MessageResourceBundle.ERROR_MSG;
-import static de.cofinpro.jsondb.config.MessageResourceBundle.OK_MSG;
+import static de.cofinpro.jsondb.client.config.MessageResourceBundle.ERROR_MSG;
+import static de.cofinpro.jsondb.client.config.MessageResourceBundle.OK_MSG;
 
 /**
  * model class representing a fixed length string database, that wraps a String[].

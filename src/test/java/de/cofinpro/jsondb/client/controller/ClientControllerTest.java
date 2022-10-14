@@ -1,4 +1,4 @@
-package de.cofinpro.jsondb.controller;
+package de.cofinpro.jsondb.client.controller;
 
 import de.cofinpro.jsondb.io.ConsolePrinter;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,12 +11,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Scanner;
 
-import static de.cofinpro.jsondb.config.MessageResourceBundle.ERROR_MSG;
-import static de.cofinpro.jsondb.config.MessageResourceBundle.OK_MSG;
+import static de.cofinpro.jsondb.client.config.MessageResourceBundle.ERROR_MSG;
+import static de.cofinpro.jsondb.client.config.MessageResourceBundle.OK_MSG;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class JsonDbControllerTest {
+class ClientControllerTest {
 
     @Mock
     ConsolePrinter printerMock;
@@ -24,11 +24,11 @@ class JsonDbControllerTest {
     @Mock
     Scanner scannerMock;
 
-    JsonDbController controller;
+    ClientController controller;
 
     @BeforeEach
     void setup() {
-        controller = new JsonDbController(printerMock);
+        controller = new ClientController(printerMock);
     }
 
     @ParameterizedTest

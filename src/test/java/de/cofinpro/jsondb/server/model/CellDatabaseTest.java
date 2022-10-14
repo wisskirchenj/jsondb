@@ -1,6 +1,6 @@
-package de.cofinpro.jsondb.model;
+package de.cofinpro.jsondb.server.model;
 
-import de.cofinpro.jsondb.config.MessageResourceBundle;
+import de.cofinpro.jsondb.client.config.MessageResourceBundle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

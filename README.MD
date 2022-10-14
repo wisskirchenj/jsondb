@@ -25,7 +25,7 @@ The sources of main project tasks (6 stages) and unit, mockito testing.
 ## Program description
 
 A server-client(s) application that simulates the Json storage and retrieval in a server-side
-Json-database. The DB-realization is done via array (later stages Json-file) and the
+Json-database. The DB-realization is done via Json-file (in later stages) and the
 Client-Server connection is "low-level" build via Socket to ServerSocket connections.
 
 Have fun!
@@ -40,3 +40,6 @@ Have fun!
 
 24.09.22 Stage 1 completed - a cell database simulated by y string array. Some CL commands to set, get and delete in 
 the 'database'.
+
+14.10.22 Stage 2 completed - a client and server application are implemented, which communicate via sockets. A very
+basic connection is established in this stage - requesting and receiving a random record #.

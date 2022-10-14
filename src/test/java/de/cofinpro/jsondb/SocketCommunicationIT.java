@@ -63,6 +63,10 @@ class SocketCommunicationIT {
                 throw new RuntimeException(e);
             }
         }).start();
+        waitTenMs();
+    }
+
+    private static void waitTenMs() throws InterruptedException {
         final CountDownLatch waiter = new CountDownLatch(1);
         assertFalse(waiter.await(10, TimeUnit.MILLISECONDS));
     }
@@ -90,8 +94,10 @@ class SocketCommunicationIT {
         try (Socket mockClient = new Socket(InetAddress.getByName(SocketConfig.getSERVER_ADDRESS()),
                 SocketConfig.getSERVER_PORT())) {
             new DataOutputStream(mockClient.getOutputStream()).writeUTF("something");
-            System.out.println(new DataInputStream(mockClient.getInputStream()).readUTF());
+            assertEquals(MessageResourceBundle.INVALID_REQUEST_MSG,
+                    new DataInputStream(mockClient.getInputStream()).readUTF());
         }
+        waitTenMs();
         verify(printer, times(3)).printInfo(argCaptor.capture());
         List<String> serverOutput = argCaptor.getAllValues();
         assertEquals(MessageResourceBundle.STARTED_MSG, serverOutput.get(0));

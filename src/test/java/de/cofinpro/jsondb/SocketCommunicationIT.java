@@ -2,9 +2,9 @@ package de.cofinpro.jsondb;
 
 import de.cofinpro.jsondb.client.controller.ClientController;
 import de.cofinpro.jsondb.io.ConsolePrinter;
-import de.cofinpro.jsondb.io.SocketConfig;
 import de.cofinpro.jsondb.server.config.MessageResourceBundle;
 import de.cofinpro.jsondb.server.controller.ServerController;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -12,47 +12,32 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.InetAddress;
-import java.net.Socket;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
+import static de.cofinpro.jsondb.client.config.MessageResourceBundle.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SocketCommunicationIT {
 
     @Mock
-    volatile ConsolePrinter printer;
+    ConsolePrinter printer;
 
     @Captor
     ArgumentCaptor<String> argCaptor;
 
-    ServerController server;
+    static ServerController server;
 
-    @Test
-    void whenClientConnects_ServerResponds() throws IOException, InterruptedException {
-        server = new ServerController(printer);
+    @BeforeAll
+    static void setupServer() {
+        server = new ServerController(new ConsolePrinter());
         startServerThread();
-        new ClientController(new ConsolePrinter()).send(new String[] {});
-        verify(printer, times(3)).printInfo(argCaptor.capture());
-        List<String> serverOutput = argCaptor.getAllValues();
-        assertEquals(MessageResourceBundle.STARTED_MSG, serverOutput.get(0));
-        assertTrue(serverOutput.get(1).contains("Received: "));
-        assertTrue(serverOutput.get(1).contains("Give me a record # "));
-        assertTrue(serverOutput.get(2).contains("Sent: "));
-        assertTrue(serverOutput.get(2).contains("A record # "));
-        assertTrue(serverOutput.get(2).contains(" was sent"));
     }
 
-    private void startServerThread() throws InterruptedException {
+    static void startServerThread() {
         new Thread(() -> {
             try {
                 server.run();
@@ -60,52 +45,59 @@ class SocketCommunicationIT {
                 throw new RuntimeException(e);
             }
         }).start();
-        waitTenMs();
-    }
-
-    private static void waitTenMs() throws InterruptedException {
-        final CountDownLatch waiter = new CountDownLatch(1);
-        assertFalse(waiter.await(10, TimeUnit.MILLISECONDS));
     }
 
     @Test
-    void whenClientConnectsToServer_ClientGetsAnswer() throws IOException, InterruptedException {
-        server = new ServerController(new ConsolePrinter());
-        startServerThread();
-        new ClientController(printer).send(new String[]{});
+    void whenClientConnectsToServer_ClientGetsAnswer() throws IOException {
+        String[] args =new String[]{"-t", "get", "-i", "1"};
+        new ClientController(printer).send(args);
         verify(printer, times(3)).printInfo(argCaptor.capture());
         List<String> clientOutput = argCaptor.getAllValues();
-        assertEquals(de.cofinpro.jsondb.client.config.MessageResourceBundle.STARTED_MSG, clientOutput.get(0));
-        assertTrue(clientOutput.get(1).contains("Sent: "));
-        assertTrue(clientOutput.get(1).contains("Give me a record # "));
-        assertTrue(clientOutput.get(2).contains("Received: "));
-        assertTrue(clientOutput.get(2).contains("A record # "));
-        assertTrue(clientOutput.get(2).contains(" was sent"));
+        assertEquals(STARTED_MSG, clientOutput.get(0));
+        assertEquals(SENT_MSG_TEMPLATE.formatted(String.join(" ", args)),
+                clientOutput.get(1));
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(MessageResourceBundle.ERROR_MSG),
+                clientOutput.get(2));
     }
 
-
     @Test
-    void whenClientSendsInvalidRequest_ServerRespondsWithInvalidMessage() throws IOException, InterruptedException {
-        server = new ServerController(printer);
-        startServerThread();
-        try (Socket mockClient = new Socket(InetAddress.getByName(SocketConfig.getSERVER_ADDRESS()),
-                SocketConfig.getSERVER_PORT())) {
-            new DataOutputStream(mockClient.getOutputStream()).writeUTF("something");
-            assertEquals(MessageResourceBundle.INVALID_REQUEST_MSG,
-                    new DataInputStream(mockClient.getInputStream()).readUTF());
-        }
-        waitTenMs();
+    void whenClientRequestsSet_ClientGetsAnswer() throws IOException {
+        String[] args =new String[]{"-t", "set", "-i", "17", "-m", "hi there!"};
+        new ClientController(printer).send(args);
         verify(printer, times(3)).printInfo(argCaptor.capture());
-        List<String> serverOutput = argCaptor.getAllValues();
-        assertEquals(MessageResourceBundle.STARTED_MSG, serverOutput.get(0));
-        assertEquals("Received: something", serverOutput.get(1));
-        assertEquals("Sent: " + MessageResourceBundle.INVALID_REQUEST_MSG, serverOutput.get(2));
+        List<String> clientOutput = argCaptor.getAllValues();
+        assertEquals(STARTED_MSG, clientOutput.get(0));
+        assertEquals(SENT_MSG_TEMPLATE.formatted(String.join(" ", args)),
+                clientOutput.get(1));
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(MessageResourceBundle.OK_MSG),
+                clientOutput.get(2));
     }
 
+    @Test
+    void whenClientSendsInvalidRequest_ClientReceivesInvalidMessage() throws IOException {
+        String[] args =new String[]{"-t", "gett", "-i", "1"};
+        new ClientController(printer).send(args);
+        verify(printer, times(3)).printInfo(argCaptor.capture());
+        List<String> clientOutput = argCaptor.getAllValues();
+        assertEquals(STARTED_MSG, clientOutput.get(0));
+        assertEquals(SENT_MSG_TEMPLATE.formatted(String.join(" ", args)),
+                clientOutput.get(1));
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(MessageResourceBundle.INVALID_REQUEST_MSG),
+                clientOutput.get(2));
+    }
 
     @Test
-    void whenSendCalledWithoutServer_ConnectExceptionThrown() {
+    void whenExitSend_ServerStopsAndNextConnectThrowsConnectException() throws IOException {
+        String[] args =new String[]{"-t", "exit"};
+        new ClientController(printer).send(args);
+        verify(printer, times(3)).printInfo(argCaptor.capture());
+        List<String> clientOutput = argCaptor.getAllValues();
+        assertEquals(STARTED_MSG, clientOutput.get(0));
+        assertEquals(SENT_MSG_TEMPLATE.formatted(String.join(" ", args)),
+                clientOutput.get(1));
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(MessageResourceBundle.OK_MSG),
+                clientOutput.get(2));
         assertThrows(ConnectException.class, () -> new ClientController(printer).send(new String[]{}));
-        verify(printer, never()).printInfo(anyString());
+        startServerThread();
     }
 }

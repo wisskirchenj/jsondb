@@ -1,6 +1,6 @@
 package de.cofinpro.jsondb.server.model;
 
-import de.cofinpro.jsondb.client.config.MessageResourceBundle;
+import de.cofinpro.jsondb.server.config.MessageResourceBundle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,7 +18,7 @@ class CellDatabaseTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, -1, -1000, 101, 10000})
+    @ValueSource(ints = {0, -1, -1000, 1001, 10000})
     void whenWrongIndex_setReturnsError(int index) {
         assertEquals(MessageResourceBundle.ERROR_MSG, cellDatabase.set(index, "sth"));
     }
@@ -53,13 +53,13 @@ class CellDatabaseTest {
 
 
     @ParameterizedTest
-    @ValueSource(ints = {0, -1, -1000, 101, 10000})
+    @ValueSource(ints = {0, -1, -1000, 1001, 10000})
     void whenWrongIndex_getReturnsError(int index) {
         assertEquals(MessageResourceBundle.ERROR_MSG, cellDatabase.get(index));
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, -1, -1000, 101, 10000})
+    @ValueSource(ints = {0, -1, -1000, 1001, 10000})
     void whenWrongIndex_deleteReturnsError(int index) {
         assertEquals(MessageResourceBundle.ERROR_MSG, cellDatabase.delete(index));
     }

@@ -21,6 +21,6 @@ public class DatabaseCommand {
     private List<String> message;
 
     public String getMessage() {
-        return String.join(" ", message);
+        return message == null ? null : String.join(" ", message);
     }
 }

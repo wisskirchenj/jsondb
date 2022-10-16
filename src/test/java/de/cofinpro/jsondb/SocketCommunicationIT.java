@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
 class SocketCommunicationIT {
 
     @Mock
-    ConsolePrinter printer;
+    volatile ConsolePrinter printer;
 
     @Captor
     ArgumentCaptor<String> argCaptor;
@@ -41,7 +41,7 @@ class SocketCommunicationIT {
     void whenClientConnects_ServerResponds() throws IOException, InterruptedException {
         server = new ServerController(printer);
         startServerThread();
-        new ClientController(new ConsolePrinter()).send();
+        new ClientController(new ConsolePrinter()).send(new String[] {});
         verify(printer, times(3)).printInfo(argCaptor.capture());
         List<String> serverOutput = argCaptor.getAllValues();
         assertEquals(MessageResourceBundle.STARTED_MSG, serverOutput.get(0));
@@ -72,7 +72,7 @@ class SocketCommunicationIT {
     void whenClientConnectsToServer_ClientGetsAnswer() throws IOException, InterruptedException {
         server = new ServerController(new ConsolePrinter());
         startServerThread();
-        new ClientController(printer).send();
+        new ClientController(printer).send(new String[]{});
         verify(printer, times(3)).printInfo(argCaptor.capture());
         List<String> clientOutput = argCaptor.getAllValues();
         assertEquals(de.cofinpro.jsondb.client.config.MessageResourceBundle.STARTED_MSG, clientOutput.get(0));
@@ -105,7 +105,7 @@ class SocketCommunicationIT {
 
     @Test
     void whenSendCalledWithoutServer_ConnectExceptionThrown() {
-        assertThrows(ConnectException.class, () -> new ClientController(printer).send());
+        assertThrows(ConnectException.class, () -> new ClientController(printer).send(new String[]{}));
         verify(printer, never()).printInfo(anyString());
     }
 }

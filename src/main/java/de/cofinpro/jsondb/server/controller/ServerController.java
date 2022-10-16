@@ -1,6 +1,8 @@
 package de.cofinpro.jsondb.server.controller;
 
+import com.beust.jcommander.JCommander;
 import de.cofinpro.jsondb.io.ConsolePrinter;
+import de.cofinpro.jsondb.server.model.CellDatabase;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -8,8 +10,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static de.cofinpro.jsondb.server.config.MessageResourceBundle.*;
 import static de.cofinpro.jsondb.io.SocketConfig.*;
@@ -20,6 +20,7 @@ import static de.cofinpro.jsondb.io.SocketConfig.*;
 public class ServerController {
 
     private final ConsolePrinter printer;
+    private final CellDatabase database = new CellDatabase();
     private ServerSocket server;
 
     public ServerController(ConsolePrinter printer) {
@@ -34,7 +35,10 @@ public class ServerController {
      */
     public void run() throws IOException {
         startServer();
-        acceptOneClient();
+        boolean exitRequested = false;
+        while (!exitRequested) {
+            exitRequested = acceptOneClient();
+        }
         server.close();
     }
 
@@ -50,27 +54,42 @@ public class ServerController {
 
     /**
      * listen for one client request and handle it
+     * @return true, if client requests exit, false else
      * @throws IOException if some socket operation fails
      */
-    private void acceptOneClient() throws IOException {
+    private boolean acceptOneClient() throws IOException {
         Socket client = server.accept();
         String clientRequest = new DataInputStream(client.getInputStream()).readUTF();
         printer.printInfo(RECEIVED_MSG_TEMPLATE.formatted(clientRequest));
-        answerClientRequest(client, clientRequest);
+        DatabaseCommand command = parseRequest(clientRequest);
+        answerClientRequest(client, command);
+        return command.getCommand().equals("exit");
+    }
+
+    private DatabaseCommand parseRequest(String clientRequest) {
+        DatabaseCommand command = new DatabaseCommand();
+        JCommander.newBuilder()
+                .addObject(command)
+                .build()
+                .parse(clientRequest.split(" "));
+        return command;
     }
 
     /**
      * answers a client request. If the request format is valid, the requested record is delivered - if not an
      * invalid message is sent.
      * @param client the socket to the connected client
-     * @param clientRequest the client request to answer
+     * @param command the parsed database command
      * @throws IOException if some socket operation fails
      */
-    private void answerClientRequest(Socket client, String clientRequest) throws IOException {
-        Matcher recordMatcher = Pattern.compile("record # \\d+").matcher(clientRequest);
-        String answer = recordMatcher.find()
-                ? ANSWER_TEMPLATE.formatted(recordMatcher.group())
-                : INVALID_REQUEST_MSG;
+    private void answerClientRequest(Socket client, DatabaseCommand command) throws IOException {
+        String answer = switch (command.getCommand()) {
+            case "set" -> database.set(command.getCellIndex(), command.getMessage());
+            case "get" -> database.get(command.getCellIndex());
+            case "delete" -> database.delete(command.getCellIndex());
+            case "exit" -> OK_MSG;
+            default -> INVALID_REQUEST_MSG;
+        };
         new DataOutputStream(client.getOutputStream()).writeUTF(answer);
         printer.printInfo(SENT_MSG_TEMPLATE.formatted(answer));
     }

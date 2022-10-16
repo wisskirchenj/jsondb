@@ -11,8 +11,5 @@ public class MessageResourceBundle {
 
     public static final String STARTED_MSG = "Client started!";
     public static final String RECEIVED_MSG_TEMPLATE = "Received: %s";
-    public static final String REQUEST_TEMPLATE = "Give me a record # %d";
     public static final String SENT_MSG_TEMPLATE = "Sent: %s";
-    public static final String ERROR_MSG = "ERROR";
-    public static final String OK_MSG = "OK";
 }

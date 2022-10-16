@@ -5,6 +5,9 @@ import lombok.Getter;
 
 import java.util.List;
 
+/**
+ * Class representing (cell-)database commands. Instances are filled by JCommander parsing of CL-arguments.
+ */
 @Getter
 public class DatabaseCommand {
 

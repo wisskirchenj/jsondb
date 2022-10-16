@@ -63,6 +63,7 @@ public class ServerController {
         printer.printInfo(RECEIVED_MSG_TEMPLATE.formatted(clientRequest));
         DatabaseCommand command = parseRequest(clientRequest);
         answerClientRequest(client, command);
+        client.close();
         return command.getCommand().equals("exit");
     }
 
@@ -76,7 +77,7 @@ public class ServerController {
     }
 
     /**
-     * answers a client request. If the request format is valid, the requested record is delivered - if not an
+     * answers a client request. The database command is executed if recognized - if not an
      * invalid message is sent.
      * @param client the socket to the connected client
      * @param command the parsed database command

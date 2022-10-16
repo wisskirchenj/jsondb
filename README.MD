@@ -43,3 +43,6 @@ the 'database'.
 
 14.10.22 Stage 2 completed - a client and server application are implemented, which communicate via sockets. A very
 basic connection is established in this stage - requesting and receiving a random record #.
+
+16.10.22 Stage 3 completed - server applications now handles the cell database and works on socket connection
+for clients in a loop until exit command set. com.beust.jcommander used to parse CL-parameter options

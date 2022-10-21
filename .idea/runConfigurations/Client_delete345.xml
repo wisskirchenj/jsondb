@@ -2,7 +2,7 @@
   <configuration default="false" name="Client delete345" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="de.cofinpro.jsondb.client.Main" />
     <module name="jsondb.main" />
-    <option name="PROGRAM_PARAMETERS" value="-t delete -i 345" />
+    <option name="PROGRAM_PARAMETERS" value="-t delete -k 345" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="de.cofinpro.jsondb.server.*" />

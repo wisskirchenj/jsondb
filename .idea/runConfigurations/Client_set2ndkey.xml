@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Client set2" type="Application" factoryName="Application">
+  <configuration default="false" name="Client set2ndkey" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="de.cofinpro.jsondb.client.Main" />
     <module name="jsondb.main" />
-    <option name="PROGRAM_PARAMETERS" value="-t set -i 2 -m HelloWorld!" />
+    <option name="PROGRAM_PARAMETERS" value="-t set -k 2ndkey -v HelloWorld!" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="de.cofinpro.jsondb.server.*" />

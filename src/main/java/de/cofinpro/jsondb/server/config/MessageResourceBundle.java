@@ -14,5 +14,6 @@ public class MessageResourceBundle {
     public static final String INVALID_REQUEST_MSG = "Invalid client request received!";
     public static final String SENT_MSG_TEMPLATE = "Sent: %s";
     public static final String ERROR_MSG = "ERROR";
+    public static final String NO_SUCH_KEY_MSG = "No such key";
     public static final String OK_MSG = "OK";
 }

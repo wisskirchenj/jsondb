@@ -9,6 +9,7 @@ import java.io.IOException;
  * Main class for the JsonDb Server
  */
 public class Main {
+
     public static void main(String[] args) throws IOException {
         new ServerController(new ConsolePrinter()).run();
     }

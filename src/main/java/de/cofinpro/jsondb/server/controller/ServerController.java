@@ -1,8 +1,11 @@
 package de.cofinpro.jsondb.server.controller;
 
-import com.beust.jcommander.JCommander;
 import de.cofinpro.jsondb.io.ConsolePrinter;
-import de.cofinpro.jsondb.server.model.CellDatabase;
+import de.cofinpro.jsondb.io.json.DatabaseCommand;
+import de.cofinpro.jsondb.io.json.DatabaseResponse;
+import de.cofinpro.jsondb.io.json.GsonPooled;
+import de.cofinpro.jsondb.server.model.KeyStorage;
+import de.cofinpro.jsondb.server.model.RedisKeyStorage;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -15,12 +18,12 @@ import static de.cofinpro.jsondb.server.config.MessageResourceBundle.*;
 import static de.cofinpro.jsondb.io.SocketConfig.*;
 
 /**
- * controller class for the JsonDb-Server
+ * controller class for the JsonDb-Server using a Jedis-based kex storage to Redis.
  */
 public class ServerController {
 
     private final ConsolePrinter printer;
-    private final CellDatabase database = new CellDatabase();
+    private final KeyStorage database = new RedisKeyStorage();
     private ServerSocket server;
 
     public ServerController(ConsolePrinter printer) {
@@ -29,8 +32,8 @@ public class ServerController {
 
     /**
      * single entry point called from main.
-     * A server(socket) is created on the configured port which listens until one single client request is incoming.
-     * The request is handled and the server stops.
+     * A server(socket) is created on the configured port which listens for incoming single client requests
+     * and handles them - until a client sends an exit command is incoming. Then the server stops.
      * @throws IOException in case server or client socket creation or read/write method fails
      */
     public void run() throws IOException {
@@ -40,6 +43,7 @@ public class ServerController {
             exitRequested = acceptOneClient();
         }
         server.close();
+        database.close();
     }
 
     /**
@@ -61,37 +65,28 @@ public class ServerController {
         Socket client = server.accept();
         String clientRequest = new DataInputStream(client.getInputStream()).readUTF();
         printer.printInfo(RECEIVED_MSG_TEMPLATE.formatted(clientRequest));
-        DatabaseCommand command = parseRequest(clientRequest);
+        DatabaseCommand command = GsonPooled.getGson().fromJson(clientRequest, DatabaseCommand.class);
         answerClientRequest(client, command);
         client.close();
-        return command.getCommand().equals("exit");
-    }
-
-    private DatabaseCommand parseRequest(String clientRequest) {
-        DatabaseCommand command = new DatabaseCommand();
-        JCommander.newBuilder()
-                .addObject(command)
-                .build()
-                .parse(clientRequest.split(" "));
-        return command;
+        return command.getType().equals("exit");
     }
 
     /**
-     * answers a client request. The database command is executed if recognized - if not an
-     * invalid message is sent.
+     * answers a client request. The database command is executed if recognized and the response mapped to
+     * a DatabaseResponse, that is Jsonified and sent.
      * @param client the socket to the connected client
-     * @param command the parsed database command
+     * @param command the received database command
      * @throws IOException if some socket operation fails
      */
     private void answerClientRequest(Socket client, DatabaseCommand command) throws IOException {
-        String answer = switch (command.getCommand()) {
-            case "set" -> database.set(command.getCellIndex(), command.getMessage());
-            case "get" -> database.get(command.getCellIndex());
-            case "delete" -> database.delete(command.getCellIndex());
-            case "exit" -> OK_MSG;
-            default -> INVALID_REQUEST_MSG;
+        DatabaseResponse answer = switch (command.getType()) {
+            case "set" -> database.set(command.getKey(), command.getValue());
+            case "get" -> database.get(command.getKey());
+            case "delete" -> database.delete(command.getKey());
+            case "exit" -> DatabaseResponse.ok();
+            default -> new DatabaseResponse(ERROR_MSG, null, INVALID_REQUEST_MSG);
         };
-        new DataOutputStream(client.getOutputStream()).writeUTF(answer);
+        new DataOutputStream(client.getOutputStream()).writeUTF(GsonPooled.getGson().toJson(answer));
         printer.printInfo(SENT_MSG_TEMPLATE.formatted(answer));
     }
 }

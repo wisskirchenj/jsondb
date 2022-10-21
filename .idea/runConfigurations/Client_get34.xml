@@ -2,7 +2,7 @@
   <configuration default="false" name="Client get34" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="de.cofinpro.jsondb.client.Main" />
     <module name="jsondb.main" />
-    <option name="PROGRAM_PARAMETERS" value="-t get -i 34" />
+    <option name="PROGRAM_PARAMETERS" value="-t get -k 34" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="de.cofinpro.jsondb.server.*" />

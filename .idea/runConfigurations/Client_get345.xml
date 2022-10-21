@@ -2,7 +2,7 @@
   <configuration default="false" name="Client get345" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="de.cofinpro.jsondb.client.Main" />
     <module name="jsondb.main" />
-    <option name="PROGRAM_PARAMETERS" value="-t get -i 345" />
+    <option name="PROGRAM_PARAMETERS" value="-t get -k 345" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="de.cofinpro.jsondb.server.*" />

@@ -46,3 +46,6 @@ basic connection is established in this stage - requesting and receiving a rando
 
 16.10.22 Stage 3 completed - server applications now handles the cell database and works on socket connection
 for clients in a loop until exit command set. com.beust.jcommander used to parse CL-parameter options
+
+21.10.22 Stage 4 completed - socket communication now in Json Format (Database Command and Response). Use of Gson-library.
+Database is now a Redis KeyStore which is connected from the Java Server with the Jedis-library.

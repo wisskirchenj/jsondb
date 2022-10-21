@@ -1,4 +1,4 @@
-package de.cofinpro.jsondb.server.controller;
+package de.cofinpro.jsondb.io.json;
 
 import com.beust.jcommander.JCommander;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,9 +21,9 @@ class DatabaseCommandTest {
                 .addObject(databaseCommand)
                 .build()
                 .parse("-t", "exit");
-        assertEquals("exit", databaseCommand.getCommand());
-        assertNull(databaseCommand.getCellIndex());
-        assertNull(databaseCommand.getMessage());
+        assertEquals("exit", databaseCommand.getType());
+        assertNull(databaseCommand.getKey());
+        assertNull(databaseCommand.getValue());
     }
 
     @Test
@@ -31,10 +31,10 @@ class DatabaseCommandTest {
         JCommander.newBuilder()
                 .addObject(databaseCommand)
                 .build()
-                .parse("-t", "get", "-i", "123");
-        assertEquals("get", databaseCommand.getCommand());
-        assertEquals(123, databaseCommand.getCellIndex());
-        assertNull(databaseCommand.getMessage());
+                .parse("-t", "get", "-k", "123");
+        assertEquals("get", databaseCommand.getType());
+        assertEquals("123", databaseCommand.getKey());
+        assertNull(databaseCommand.getValue());
     }
 
     @Test
@@ -42,10 +42,10 @@ class DatabaseCommandTest {
         JCommander.newBuilder()
                 .addObject(databaseCommand)
                 .build()
-                .parse("-t", "set", "-i", "123", "-m", "what", "a", "long", "message");
-        assertEquals("set", databaseCommand.getCommand());
-        assertEquals(123, databaseCommand.getCellIndex());
-        assertEquals("what a long message", databaseCommand.getMessage());
+                .parse("-t", "set", "-k", "123", "-v", "what a long message");
+        assertEquals("set", databaseCommand.getType());
+        assertEquals("123", databaseCommand.getKey());
+        assertEquals("what a long message", databaseCommand.getValue());
     }
 
     @Test
@@ -53,9 +53,9 @@ class DatabaseCommandTest {
         JCommander.newBuilder()
                 .addObject(databaseCommand)
                 .build()
-                .parse("-t", "set", "-m", "what a long   -message",  "-i", "123");
-        assertEquals("set", databaseCommand.getCommand());
-        assertEquals(123, databaseCommand.getCellIndex());
-        assertEquals("what a long   -message", databaseCommand.getMessage());
+                .parse("-t", "set", "-v", "what a long   -message",  "-k", "456");
+        assertEquals("set", databaseCommand.getType());
+        assertEquals("456", databaseCommand.getKey());
+        assertEquals("what a long   -message", databaseCommand.getValue());
     }
 }

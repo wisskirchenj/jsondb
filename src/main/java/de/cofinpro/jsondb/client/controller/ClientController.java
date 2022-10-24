@@ -10,6 +10,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static de.cofinpro.jsondb.client.config.MessageResourceBundle.*;
 import static de.cofinpro.jsondb.io.SocketConfig.*;
@@ -20,6 +22,7 @@ import static de.cofinpro.jsondb.io.SocketConfig.*;
  */
 public class ClientController {
 
+    private static final String CLIENT_DATA_PATH = "src/main/resources/client/data/";
     private final ConsolePrinter printer;
 
     public ClientController(ConsolePrinter printer) {
@@ -42,16 +45,19 @@ public class ClientController {
     }
 
     /**
-     * parses the CL arguments and maps it to a database command request
+     * parses the CL arguments and maps it to a database command request, which is Jsonified.
+     * If a filename is given, the command reqeust string is taken from the Json-file.
      * @param args the command line args to the client application
      * @return the Json-request string to send to the server via socket.
      */
-    private String createRequestFromArgs(String[] args) {
+    private String createRequestFromArgs(String[] args) throws IOException {
         DatabaseCommand command = new DatabaseCommand();
         JCommander.newBuilder()
                 .addObject(command)
                 .build()
                 .parse(args);
-        return GsonPooled.getGson().toJson(command);
+        return command.getInputFilename() == null
+                ? GsonPooled.getGson().toJson(command)
+                : Files.readString(Path.of(CLIENT_DATA_PATH + command.getInputFilename())).trim();
     }
 }

@@ -41,8 +41,8 @@ class SocketCommunicationIT {
     }
 
     @AfterAll
-    static void closeServerAndJedis() throws IOException {
-        String[] args =new String[]{"-t", "exit"};
+    static void closeServer() throws IOException {
+        String[] args = new String[]{"-t", "exit"};
         new ClientController(new ConsolePrinter()).send(args);
     }
 

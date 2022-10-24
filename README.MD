@@ -49,3 +49,6 @@ for clients in a loop until exit command set. com.beust.jcommander used to parse
 
 21.10.22 Stage 4 completed - socket communication now in Json Format (Database Command and Response). Use of Gson-library.
 Database is now a Redis KeyStore which is connected from the Java Server with the Jedis-library.
+
+24.10.22 Stage 5 completed - multi-threaded request handling with executor service. 
+Database file-based hand-made using ReentrantReadWriteLock.

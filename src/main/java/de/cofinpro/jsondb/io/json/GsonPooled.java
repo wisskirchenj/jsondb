@@ -1,6 +1,7 @@
 package de.cofinpro.jsondb.io.json;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /**
  * singleton wrapper (eagerly initialized since definitely needed right away) to an application-wide
@@ -8,7 +9,7 @@ import com.google.gson.Gson;
  */
 public class GsonPooled {
 
-    private static final Gson GSON = new Gson();
+    private static final Gson GSON = new GsonBuilder().create();
 
     private GsonPooled() {
         // no instances - implements singleton access to Gson object

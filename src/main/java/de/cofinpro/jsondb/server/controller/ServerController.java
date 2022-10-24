@@ -4,8 +4,8 @@ import de.cofinpro.jsondb.io.ConsolePrinter;
 import de.cofinpro.jsondb.io.json.DatabaseCommand;
 import de.cofinpro.jsondb.io.json.DatabaseResponse;
 import de.cofinpro.jsondb.io.json.GsonPooled;
+import de.cofinpro.jsondb.server.model.FileKeyStorage;
 import de.cofinpro.jsondb.server.model.KeyStorage;
-import de.cofinpro.jsondb.server.model.RedisKeyStorage;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static de.cofinpro.jsondb.server.config.MessageResourceBundle.*;
 import static de.cofinpro.jsondb.io.SocketConfig.*;
@@ -23,7 +26,7 @@ import static de.cofinpro.jsondb.io.SocketConfig.*;
 public class ServerController {
 
     private final ConsolePrinter printer;
-    private final KeyStorage database = new RedisKeyStorage();
+    private final KeyStorage database = new FileKeyStorage();
     private ServerSocket server;
 
     public ServerController(ConsolePrinter printer) {
@@ -38,10 +41,7 @@ public class ServerController {
      */
     public void run() throws IOException {
         startServer();
-        boolean exitRequested = false;
-        while (!exitRequested) {
-            exitRequested = acceptOneClient();
-        }
+        acceptClientsMultiThreaded();
         server.close();
         database.close();
     }
@@ -57,17 +57,56 @@ public class ServerController {
     }
 
     /**
-     * listen for one client request and handle it
+     * use an ExecutorService to handle clients asynchronously, until one client requests the server to exit, in which
+     * case the ExecutorService is shutdown.
+     */
+    private void acceptClientsMultiThreaded() throws IOException {
+        boolean exitRequested = false;
+        var executor = Executors.newFixedThreadPool(10);
+        try {
+            while (!exitRequested) {
+                exitRequested = acceptOneClient(executor);
+            }
+        } finally {
+            shutDownExecutorAndWait(executor);
+        }
+    }
+
+    /**
+     * needed for tests to wait for all threads to finish - normal program runs can live without awaitTermination...
+     * @param executor the executor service to shut down and wait for
+     */
+    private void shutDownExecutorAndWait(ExecutorService executor) {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(3, TimeUnit.SECONDS)) { // to finish started db-access threads
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * listens for one client request and handles it. While accept and "command unwrap" is done synchronously,
+     * the answer - which requires DB-access - is run in a new thread from the executor pool. Thus exit is returned
+     * synchronously to the accept loop, i.e. the server stops (already submitted DB-request still finish).
      * @return true, if client requests exit, false else
      * @throws IOException if some socket operation fails
      */
-    private boolean acceptOneClient() throws IOException {
+    private boolean acceptOneClient(ExecutorService executor) throws IOException {
         Socket client = server.accept();
         String clientRequest = new DataInputStream(client.getInputStream()).readUTF();
         printer.printInfo(RECEIVED_MSG_TEMPLATE.formatted(clientRequest));
         DatabaseCommand command = GsonPooled.getGson().fromJson(clientRequest, DatabaseCommand.class);
-        answerClientRequest(client, command);
-        client.close();
+        executor.submit(() -> {
+            try {
+                answerClientRequest(client, command);
+                client.close();
+            } catch (Exception e) {
+                printer.printError(e.toString());
+            }
+        });
         return command.getType().equals("exit");
     }
 

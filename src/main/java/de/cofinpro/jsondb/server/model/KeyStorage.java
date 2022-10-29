@@ -7,7 +7,7 @@ import de.cofinpro.jsondb.io.json.DatabaseResponse;
  */
 public interface KeyStorage {
     
-    DatabaseResponse set(String key, String value);
+    DatabaseResponse set(String key, Object value);
 
     DatabaseResponse get(String key);
 

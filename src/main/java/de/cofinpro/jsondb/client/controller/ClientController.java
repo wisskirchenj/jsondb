@@ -12,6 +12,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static de.cofinpro.jsondb.client.config.MessageResourceBundle.*;
 import static de.cofinpro.jsondb.io.SocketConfig.*;
@@ -56,6 +57,9 @@ public class ClientController {
                 .addObject(command)
                 .build()
                 .parse(args);
+        if (command.getValue() instanceof List<?> list && list.get(0) instanceof String value) {
+            command.setValue(value);
+        }
         return command.getInputFilename() == null
                 ? GsonPooled.getGson().toJson(command)
                 : Files.readString(Path.of(CLIENT_DATA_PATH + command.getInputFilename())).trim();

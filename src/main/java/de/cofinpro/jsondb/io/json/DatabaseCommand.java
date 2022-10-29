@@ -3,6 +3,7 @@ package de.cofinpro.jsondb.io.json;
 import com.beust.jcommander.Parameter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Class representing key storage database commands. Instances are filled by JCommander parsing of CL-arguments.
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class DatabaseCommand {
 
 
-    public DatabaseCommand(String type, String key, String value) {
+    public DatabaseCommand(String type, String key, Object value) {
         this.type = type;
         this.key = key;
         this.value = value;
@@ -25,7 +26,8 @@ public class DatabaseCommand {
     private String key;
 
     @Parameter(names = "-v", description = "Storage value")
-    private String value;
+    @Setter
+    private Object value;
 
     @Parameter(names = "-in", description = "filename to read command from")
     private String inputFilename;

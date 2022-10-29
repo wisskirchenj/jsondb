@@ -7,7 +7,7 @@ import static de.cofinpro.jsondb.server.config.MessageResourceBundle.*;
 /**
  * immutable record that represents a database response.
  */
-public record DatabaseResponse(String response, @SerializedName("value") String payload,
+public record DatabaseResponse(String response, @SerializedName("value") Object payload,
                                @SerializedName("reason") String errorReason) {
 
     private static final DatabaseResponse OK = new DatabaseResponse(OK_MSG, null, null);

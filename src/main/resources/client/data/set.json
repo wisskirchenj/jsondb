@@ -1,1 +1,1 @@
-{"type":"set","key":"name","value":"Kate"}
+{"type":"set","key":"name","value":{"first-name":"Kate"}}

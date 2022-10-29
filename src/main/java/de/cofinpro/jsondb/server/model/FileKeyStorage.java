@@ -37,9 +37,7 @@ public class FileKeyStorage implements KeyStorage {
     public DatabaseResponse set(Object keys, Object value) {
         writeLock.lock();
         try {
-            Map<String, Object> dataBase = readDatabaseAsMap();
-            putDatabase(dataBase, keys, value);
-            writeDatabase(dataBase);
+            writeDatabase(putIntoDatabase(keys, value));
         } catch (IOException exception) {
             log.error("set {}: {} raised exception: {}", keys, value, exception);
         } finally {
@@ -48,21 +46,20 @@ public class FileKeyStorage implements KeyStorage {
         return DatabaseResponse.ok();
     }
 
-    private void putDatabase(Map<String, Object> dataBase, Object keys, Object value) {
+    private Map<String, Object> putIntoDatabase(Object keys, Object value) throws IOException {
         List<String> keyList = extractListFrom(keys);
-        Map<String, Object> parent = dataBase;
-        for (int i = 0; i < keyList.size(); i++) {
-            if (i == keyList.size() - 1) {
-                parent.put(keyList.get(i), value);
-            } else {
-                Map<String, Object> map = new HashMap<>();
-                if (parent.get(keyList.get(i)) instanceof Map<?,?> keyMap) {
-                    safeFill(map, keyMap.entrySet());
-                }
-                parent.put(keyList.get(i), map);
-                parent = map;
+        var database = readDatabaseAsMap();
+        Map<String, Object> parent = database;
+        for (int i = 0; i < keyList.size() - 1; i++) {
+            Map<String, Object> map = new HashMap<>();
+            if (parent.get(keyList.get(i)) instanceof Map<?,?> keyMap) {
+                safeFill(map, keyMap.entrySet());
             }
+            parent.put(keyList.get(i), map);
+            parent = map;
         }
+        parent.put(keyList.get(keyList.size() - 1), value);
+        return database;
     }
 
     private void safeFill(Map<String, Object> map, Set<? extends Map.Entry<?,?>> entrySet) {
@@ -90,16 +87,15 @@ public class FileKeyStorage implements KeyStorage {
      * get only sets the readLock, that does not prevent other threads from simultaneous reads.
      */
     @Override
-    public DatabaseResponse get(Object key) {
+    public DatabaseResponse get(Object keys) {
         DatabaseResponse response;
         readLock.lock();
         try {
-            var dataBase = readDatabaseAsMap();
-            var value = dataBase.get(key.toString());
+            var value = getFromDatabase(keys);
             response = value == null ? DatabaseResponse.error()
                     : new DatabaseResponse(OK_MSG, value, null);
         } catch (IOException exception) {
-            log.error("get with key {}: raised exception: {}", key, exception);
+            log.error("get with key {}: raised exception: {}", keys, exception);
             response = new DatabaseResponse(ERROR_MSG, null, exception.getMessage());
         } finally {
             readLock.unlock();
@@ -107,19 +103,32 @@ public class FileKeyStorage implements KeyStorage {
         return response;
     }
 
+    private Object getFromDatabase(Object keys) throws IOException {
+        Map<?,?> parent = readDatabaseAsMap();
+        List<String> keyList = extractListFrom(keys);
+        for (int i = 0; i < keyList.size() - 1; i++) {
+            if (parent.get(keyList.get(i)) instanceof Map<?,?> keyMap) {
+                parent = keyMap;
+            } else {
+                return null;
+            }
+        }
+        return parent.get(keyList.get(keyList.size() - 1));
+    }
+
     /**
      * delete needs writeLock of course. Same applies as stated in get.
      */
     @Override
-    public DatabaseResponse delete(Object key) {
+    public DatabaseResponse delete(Object keys) {
         DatabaseResponse response;
         writeLock.lock();
         try {
             var dataBase = readDatabaseAsMap();
-            response = dataBase.remove(key.toString()) == null ? DatabaseResponse.error() : DatabaseResponse.ok();
+            response = dataBase.remove(keys.toString()) == null ? DatabaseResponse.error() : DatabaseResponse.ok();
             writeDatabase(dataBase);
         } catch (IOException exception) {
-            log.error("delete {}: raised exception: {}", key, exception);
+            log.error("delete {}: raised exception: {}", keys, exception);
             response = new DatabaseResponse(ERROR_MSG, null, exception.getMessage());
         } finally {
             writeLock.unlock();

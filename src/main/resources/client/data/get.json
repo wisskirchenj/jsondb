@@ -1,1 +1,1 @@
-{"type":"get","key":"person1"}
+{"type":"get","key":["person1", "inside1", "inside2", "id3"]}

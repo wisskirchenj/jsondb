@@ -7,11 +7,11 @@ import de.cofinpro.jsondb.io.json.DatabaseResponse;
  */
 public interface KeyStorage {
     
-    DatabaseResponse set(String key, Object value);
+    DatabaseResponse set(Object key, Object value);
 
-    DatabaseResponse get(String key);
+    DatabaseResponse get(Object key);
 
-    DatabaseResponse delete(String key);
+    DatabaseResponse delete(Object key);
 
     void close();
 }

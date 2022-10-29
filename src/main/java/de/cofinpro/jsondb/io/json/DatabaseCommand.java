@@ -13,7 +13,7 @@ import lombok.Setter;
 public class DatabaseCommand {
 
 
-    public DatabaseCommand(String type, String key, Object value) {
+    public DatabaseCommand(String type, Object key, Object value) {
         this.type = type;
         this.key = key;
         this.value = value;
@@ -23,7 +23,8 @@ public class DatabaseCommand {
     private String type;
 
     @Parameter(names = "-k", description = "storage key")
-    private String key;
+    @Setter
+    private Object key;
 
     @Parameter(names = "-v", description = "Storage value")
     @Setter

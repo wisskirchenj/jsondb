@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -34,30 +34,68 @@ public class FileKeyStorage implements KeyStorage {
      * then the second writes the second key and drops the first (because it is not read again)...
      */
     @Override
-    public DatabaseResponse set(String key, Object value) {
+    public DatabaseResponse set(Object keys, Object value) {
         writeLock.lock();
         try {
             Map<String, Object> dataBase = readDatabaseAsMap();
-            dataBase.put(key, value);
+            putDatabase(dataBase, keys, value);
             writeDatabase(dataBase);
         } catch (IOException exception) {
-            log.error("set {}: {} raised exception: {}", key, value, exception);
+            log.error("set {}: {} raised exception: {}", keys, value, exception);
         } finally {
             writeLock.unlock();
         }
         return DatabaseResponse.ok();
     }
 
+    private void putDatabase(Map<String, Object> dataBase, Object keys, Object value) {
+        List<String> keyList = extractListFrom(keys);
+        Map<String, Object> parent = dataBase;
+        for (int i = 0; i < keyList.size(); i++) {
+            if (i == keyList.size() - 1) {
+                parent.put(keyList.get(i), value);
+            } else {
+                Map<String, Object> map = new HashMap<>();
+                if (parent.get(keyList.get(i)) instanceof Map<?,?> keyMap) {
+                    safeFill(map, keyMap.entrySet());
+                }
+                parent.put(keyList.get(i), map);
+                parent = map;
+            }
+        }
+    }
+
+    private void safeFill(Map<String, Object> map, Set<? extends Map.Entry<?,?>> entrySet) {
+        entrySet.forEach(entry -> {
+            if (entry.getKey() instanceof String key) {
+                map.put(key, entry.getValue());
+            }
+        });
+    }
+
+    private List<String> extractListFrom(Object keys) {
+        if (keys instanceof String key) {
+            return List.of(key);
+        }
+        List<String> result = new ArrayList<>();
+        ((List<?>) keys).forEach(element -> {
+            if (element instanceof String key) {
+                result.add(key);
+            }
+        });
+        return result;
+    }
+
     /**
      * get only sets the readLock, that does not prevent other threads from simultaneous reads.
      */
     @Override
-    public DatabaseResponse get(String key) {
+    public DatabaseResponse get(Object key) {
         DatabaseResponse response;
         readLock.lock();
         try {
             var dataBase = readDatabaseAsMap();
-            var value = dataBase.get(key);
+            var value = dataBase.get(key.toString());
             response = value == null ? DatabaseResponse.error()
                     : new DatabaseResponse(OK_MSG, value, null);
         } catch (IOException exception) {
@@ -73,12 +111,12 @@ public class FileKeyStorage implements KeyStorage {
      * delete needs writeLock of course. Same applies as stated in get.
      */
     @Override
-    public DatabaseResponse delete(String key) {
+    public DatabaseResponse delete(Object key) {
         DatabaseResponse response;
         writeLock.lock();
         try {
             var dataBase = readDatabaseAsMap();
-            response = dataBase.remove(key) == null ? DatabaseResponse.error() : DatabaseResponse.ok();
+            response = dataBase.remove(key.toString()) == null ? DatabaseResponse.error() : DatabaseResponse.ok();
             writeDatabase(dataBase);
         } catch (IOException exception) {
             log.error("delete {}: raised exception: {}", key, exception);

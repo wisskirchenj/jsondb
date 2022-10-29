@@ -60,6 +60,9 @@ public class ClientController {
         if (command.getValue() instanceof List<?> list && list.get(0) instanceof String value) {
             command.setValue(value);
         }
+        if (command.getKey() instanceof List<?> list && list.get(0) instanceof String key) {
+            command.setKey(key);
+        }
         return command.getInputFilename() == null
                 ? GsonPooled.getGson().toJson(command)
                 : Files.readString(Path.of(CLIENT_DATA_PATH + command.getInputFilename())).trim();

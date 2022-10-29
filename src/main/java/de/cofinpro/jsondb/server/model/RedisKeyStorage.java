@@ -13,18 +13,18 @@ public class RedisKeyStorage implements KeyStorage {
     private final RedisResponseMapper mapper = new RedisResponseMapper();
 
     @Override
-    public DatabaseResponse set(String key, Object value) {
-        return mapper.toResponse(jedis.set(key, value.toString()));
+    public DatabaseResponse set(Object key, Object value) {
+        return mapper.toResponse(jedis.set(key.toString(), value.toString()));
     }
 
     @Override
-    public DatabaseResponse get(String key) {
-        return mapper.toResponse(jedis.get(key));
+    public DatabaseResponse get(Object key) {
+        return mapper.toResponse(jedis.get(key.toString()));
     }
 
     @Override
-    public DatabaseResponse delete(String key) {
-        return mapper.toResponse(jedis.del(key));
+    public DatabaseResponse delete(Object key) {
+        return mapper.toResponse(jedis.del(key.toString()));
     }
 
     @Override

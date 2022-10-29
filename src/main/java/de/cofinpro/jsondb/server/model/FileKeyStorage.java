@@ -125,7 +125,7 @@ public class FileKeyStorage implements KeyStorage {
         writeLock.lock();
         try {
             var dataBase = readDatabaseAsMap();
-            response = dataBase.remove(keys.toString()) == null ? DatabaseResponse.error() : DatabaseResponse.ok();
+            response = removeFromDatabase(dataBase, keys) == null ? DatabaseResponse.error() : DatabaseResponse.ok();
             writeDatabase(dataBase);
         } catch (IOException exception) {
             log.error("delete {}: raised exception: {}", keys, exception);
@@ -134,6 +134,19 @@ public class FileKeyStorage implements KeyStorage {
             writeLock.unlock();
         }
         return response;
+    }
+
+    private Object removeFromDatabase(Map<String, Object> dataBase, Object keys) {
+        Map<?,?> parent = dataBase;
+        List<String> keyList = extractListFrom(keys);
+        for (int i = 0; i < keyList.size() - 1; i++) {
+            if (parent.get(keyList.get(i)) instanceof Map<?,?> keyMap) {
+                parent = keyMap;
+            } else {
+                return null;
+            }
+        }
+        return parent.remove(keyList.get(keyList.size() - 1));
     }
 
     private Map<String, Object> readDatabaseAsMap() throws IOException {

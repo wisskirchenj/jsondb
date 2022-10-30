@@ -4,6 +4,8 @@ import com.beust.jcommander.JCommander;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class DatabaseCommandTest {
@@ -33,7 +35,7 @@ class DatabaseCommandTest {
                 .build()
                 .parse("-t", "get", "-k", "123");
         assertEquals("get", databaseCommand.getType());
-        assertEquals("123", databaseCommand.getKey());
+        assertEquals(List.of("123"), databaseCommand.getKey());
         assertNull(databaseCommand.getValue());
     }
 
@@ -44,8 +46,8 @@ class DatabaseCommandTest {
                 .build()
                 .parse("-t", "set", "-k", "123", "-v", "what a long message");
         assertEquals("set", databaseCommand.getType());
-        assertEquals("123", databaseCommand.getKey());
-        assertEquals("what a long message", databaseCommand.getValue());
+        assertEquals(List.of("123"), databaseCommand.getKey());
+        assertEquals(List.of("what a long message"), databaseCommand.getValue());
     }
 
     @Test
@@ -55,7 +57,7 @@ class DatabaseCommandTest {
                 .build()
                 .parse("-t", "set", "-v", "what a long   -message",  "-k", "456");
         assertEquals("set", databaseCommand.getType());
-        assertEquals("456", databaseCommand.getKey());
-        assertEquals("what a long   -message", databaseCommand.getValue());
+        assertEquals(List.of("456"), databaseCommand.getKey());
+        assertEquals(List.of("what a long   -message"), databaseCommand.getValue());
     }
 }

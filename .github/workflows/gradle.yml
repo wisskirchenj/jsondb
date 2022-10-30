@@ -21,28 +21,28 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    # Service containers to run with `build`
-    services:
+    # Service containers to run with `build` => remove all '###' to use Redis-container in CI
+    ### services:
       # Label used to access the service container
-      redis:
+      ### redis:
         # Docker Hub image
-        image: redis
+        ### image: redis
         # Set health checks to wait until redis has started
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
+        ### options: >-
+          ### --health-cmd "redis-cli ping"
+          ### --health-interval 10s
+          ### --health-timeout 5s
+          ### --health-retries 5
+        ### ports:
           # Maps port 6379 on service container to the host
-          - 6379:6379
+          ### - 6379:6379
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up JDK 18
+    - name: Set up JDK 19
       uses: actions/setup-java@v3
       with:
-        java-version: '18'
+        java-version: '19'
         distribution: 'temurin'
     - name: Build with Gradle
       uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1

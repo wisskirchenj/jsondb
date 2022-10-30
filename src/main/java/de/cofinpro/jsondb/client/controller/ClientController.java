@@ -57,14 +57,22 @@ public class ClientController {
                 .addObject(command)
                 .build()
                 .parse(args);
+        replaceListsByString(command);
+        return command.getInputFilename() == null
+                ? GsonPooled.getGson().toJson(command)
+                : Files.readString(Path.of(CLIENT_DATA_PATH + command.getInputFilename())).trim();
+    }
+
+    /**
+     * Since key and value properties in the DatabaseCommand need to be Object to store Array and arbitrary Json,
+     * Jcommander passes a single string as List<String>. This method checks and corrects that.
+     */
+    private void replaceListsByString(DatabaseCommand command) {
         if (command.getValue() instanceof List<?> list && list.get(0) instanceof String value) {
             command.setValue(value);
         }
         if (command.getKey() instanceof List<?> list && list.get(0) instanceof String key) {
             command.setKey(key);
         }
-        return command.getInputFilename() == null
-                ? GsonPooled.getGson().toJson(command)
-                : Files.readString(Path.of(CLIENT_DATA_PATH + command.getInputFilename())).trim();
     }
 }

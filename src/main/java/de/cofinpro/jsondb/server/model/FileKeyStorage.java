@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiFunction;
 
 import static de.cofinpro.jsondb.server.config.MessageResourceBundle.ERROR_MSG;
 import static de.cofinpro.jsondb.server.config.MessageResourceBundle.OK_MSG;
@@ -46,6 +47,14 @@ public class FileKeyStorage implements KeyStorage {
         return DatabaseResponse.ok();
     }
 
+    /**
+     * handles the extraction of hierarchical key lists and iteratively extract the next key as Map if it is found in
+     * the database - which is read - or creates and stores a new map into the database, if not.
+     * Finally, the value is put into the position desired.
+     * @param keys a string with one key or a list with several keys - is unwrapped with extractListFrom(keys)
+     * @return the database Map after storage of the data to set.
+     * @throws IOException uf read of database fails
+     */
     private Map<String, Object> putIntoDatabase(Object keys, Object value) throws IOException {
         List<String> keyList = extractListFrom(keys);
         var database = readDatabaseAsMap();
@@ -62,14 +71,10 @@ public class FileKeyStorage implements KeyStorage {
         return database;
     }
 
-    private void safeFill(Map<String, Object> map, Set<? extends Map.Entry<?,?>> entrySet) {
-        entrySet.forEach(entry -> {
-            if (entry.getKey() instanceof String key) {
-                map.put(key, entry.getValue());
-            }
-        });
-    }
-
+    /**
+     * fill the Object-type keys parameter (maybe a string ot a List<String>) typesafe into a List<String>
+     * @return List of all keys as Strings
+     */
     private List<String> extractListFrom(Object keys) {
         if (keys instanceof String key) {
             return List.of(key);
@@ -84,6 +89,19 @@ public class FileKeyStorage implements KeyStorage {
     }
 
     /**
+     * helper method to typesafe fill a Map<String, Object> with a key value, that is of type Map<?, ?>
+     * @param map the empty map to fill
+     * @param entrySet the entry set of the Map<?, ?>
+     */
+    private void safeFill(Map<String, Object> map, Set<? extends Map.Entry<?,?>> entrySet) {
+        entrySet.forEach(entry -> {
+            if (entry.getKey() instanceof String key) {
+                map.put(key, entry.getValue());
+            }
+        });
+    }
+
+    /**
      * get only sets the readLock, that does not prevent other threads from simultaneous reads.
      */
     @Override
@@ -91,7 +109,8 @@ public class FileKeyStorage implements KeyStorage {
         DatabaseResponse response;
         readLock.lock();
         try {
-            var value = getFromDatabase(keys);
+            var dataBase = readDatabaseAsMap();
+            var value = executeHierarchicalGetOrDelete(dataBase, keys, Map::get);
             response = value == null ? DatabaseResponse.error()
                     : new DatabaseResponse(OK_MSG, value, null);
         } catch (IOException exception) {
@@ -103,19 +122,6 @@ public class FileKeyStorage implements KeyStorage {
         return response;
     }
 
-    private Object getFromDatabase(Object keys) throws IOException {
-        Map<?,?> parent = readDatabaseAsMap();
-        List<String> keyList = extractListFrom(keys);
-        for (int i = 0; i < keyList.size() - 1; i++) {
-            if (parent.get(keyList.get(i)) instanceof Map<?,?> keyMap) {
-                parent = keyMap;
-            } else {
-                return null;
-            }
-        }
-        return parent.get(keyList.get(keyList.size() - 1));
-    }
-
     /**
      * delete needs writeLock of course. Same applies as stated in get.
      */
@@ -125,7 +131,8 @@ public class FileKeyStorage implements KeyStorage {
         writeLock.lock();
         try {
             var dataBase = readDatabaseAsMap();
-            response = removeFromDatabase(dataBase, keys) == null ? DatabaseResponse.error() : DatabaseResponse.ok();
+            response = executeHierarchicalGetOrDelete(dataBase, keys, Map::remove) == null
+                    ? DatabaseResponse.error() : DatabaseResponse.ok();
             writeDatabase(dataBase);
         } catch (IOException exception) {
             log.error("delete {}: raised exception: {}", keys, exception);
@@ -136,7 +143,13 @@ public class FileKeyStorage implements KeyStorage {
         return response;
     }
 
-    private Object removeFromDatabase(Map<String, Object> dataBase, Object keys) {
+    /**
+     * iteratively process the key-list on the given database and perform the commmand on the desired level.
+     * @param command maybe a Map::get or Map::remove returning Object
+     * @return return value of the command
+     */
+    private Object executeHierarchicalGetOrDelete(Map<String, Object> dataBase, Object keys,
+                                                  BiFunction<Map<?, ?>, String, Object> command) {
         Map<?,?> parent = dataBase;
         List<String> keyList = extractListFrom(keys);
         for (int i = 0; i < keyList.size() - 1; i++) {
@@ -146,7 +159,7 @@ public class FileKeyStorage implements KeyStorage {
                 return null;
             }
         }
-        return parent.remove(keyList.get(keyList.size() - 1));
+        return command.apply(parent, keyList.get(keyList.size() - 1));
     }
 
     private Map<String, Object> readDatabaseAsMap() throws IOException {

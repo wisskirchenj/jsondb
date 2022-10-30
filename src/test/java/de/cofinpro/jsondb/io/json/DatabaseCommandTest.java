@@ -60,4 +60,16 @@ class DatabaseCommandTest {
         assertEquals(List.of("456"), databaseCommand.getKey());
         assertEquals(List.of("what a long   -message"), databaseCommand.getValue());
     }
+
+    @Test
+    void whenInOptionGiven_DatabaseCommandHasFilename() {
+        JCommander.newBuilder()
+                .addObject(databaseCommand)
+                .build()
+                .parse("-in", "command.json");
+        assertNull(databaseCommand.getType());
+        assertNull(databaseCommand.getKey());
+        assertNull(databaseCommand.getValue());
+        assertEquals("command.json", databaseCommand.getInputFilename());
+    }
 }

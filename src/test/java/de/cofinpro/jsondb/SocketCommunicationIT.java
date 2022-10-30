@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class SocketCommunicationIT {
 
+    static final String VALUE_RESPONSE_TEMPLATE = "Received: {\"response\":\"OK\",\"value\":%s}";
     @Mock
     ConsolePrinter printer;
 
@@ -84,7 +85,6 @@ class SocketCommunicationIT {
                 clientOutput.get(2));
     }
 
-
     @Test
     void whenClientRequestsDelete_ClientGetsAnswer() throws IOException {
         String[] args = new String[]{"-t", "delete", "-k", "new"};
@@ -99,9 +99,87 @@ class SocketCommunicationIT {
                 clientOutput.get(2));
     }
 
+
+    @Test
+    void whenClientReadsSetNestedKey_SetStoresNestedJson() throws IOException {
+        String[] args = new String[]{"-in", "set.json"};
+        new ClientController(printer).send(args);
+        args = new String[]{"-t", "get", "-k", "17"};
+        new ClientController(printer).send(args);
+        verify(printer, times(6)).printInfo(argCaptor.capture());
+        List<String> clientOutput = argCaptor.getAllValues();
+        assertEquals(STARTED_MSG, clientOutput.get(0));
+        assertEquals(SENT_MSG_TEMPLATE.formatted("{\"type\":\"set\",\"key\":[\"17\", \"very_new\"],\"value\":\"222 what up?\"}"),
+                clientOutput.get(1));
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
+                clientOutput.get(2));
+        assertEquals(VALUE_RESPONSE_TEMPLATE.formatted("{\"very_new\":\"222 what up?\"}"),
+                clientOutput.get(5));
+    }
+
+
+    @Test
+    void whenClientSetNewAttribToNestedKey_SetAddsToNestedJson() throws IOException {
+        String[] args = new String[]{"-in", "set.json"};
+        new ClientController(printer).send(args);
+        args = new String[]{"-in", "set_17new.json"};
+        new ClientController(printer).send(args);
+        args = new String[]{"-t", "get", "-k", "17"};
+        new ClientController(printer).send(args);
+        verify(printer, times(9)).printInfo(argCaptor.capture());
+        List<String> clientOutput = argCaptor.getAllValues();
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
+                clientOutput.get(2));
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
+                clientOutput.get(5));
+        assertTrue(clientOutput.get(8).contains("\"new_one\":\"a new value\""));
+        assertTrue(clientOutput.get(8).contains("\"very_new\":\"222 what up?\""));
+    }
+
+    @Test
+    void whenNestedSetToNonExistingParent_SetCreatesParentAndAddsNestedValue() throws IOException {
+        String[] args = new String[]{"-t", "delete", "-k", "nested"};
+        new ClientController(printer).send(args);
+        args = new String[]{"-in", "set_create_parent.json"};
+        new ClientController(printer).send(args);
+        args = new String[]{"-t", "get", "-k", "nested"};
+        new ClientController(printer).send(args);
+        verify(printer, times(9)).printInfo(argCaptor.capture());
+        List<String> clientOutput = argCaptor.getAllValues();
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
+                clientOutput.get(5));
+        assertTrue(clientOutput.get(8).contains("\"complex\":\"true\""));
+        assertEquals(VALUE_RESPONSE_TEMPLATE.formatted("{\"attrib\":{\"complex\":\"true\"}}"), clientOutput.get(8));
+    }
+
+    @Test
+    void whenDeleteNestedAttribute_ValueIsDeleted() throws IOException {
+        String[] args = new String[]{"-t", "delete", "-k", "17"};
+        new ClientController(printer).send(args);
+        args = new String[]{"-in", "set_17new.json"};
+        new ClientController(printer).send(args);
+        args = new String[]{"-in", "get_nested.json"};
+        new ClientController(printer).send(args);
+        args = new String[]{"-in", "delete17_nested.json"};
+        new ClientController(printer).send(args);
+        args = new String[]{"-in", "get_nested.json"};
+        new ClientController(printer).send(args);
+        args = new String[]{"-t", "get", "-k", "17"};
+        new ClientController(printer).send(args);
+        verify(printer, times(18)).printInfo(argCaptor.capture());
+        List<String> clientOutput = argCaptor.getAllValues();
+        assertEquals(VALUE_RESPONSE_TEMPLATE.formatted("\"222 what up?\""),
+                clientOutput.get(8));
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
+                clientOutput.get(11));
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.error())),
+                clientOutput.get(14));
+        assertEquals(VALUE_RESPONSE_TEMPLATE.formatted("{}"), clientOutput.get(17));
+    }
+
     @Test
     void whenClientSendsInvalidRequest_ClientReceivesInvalidMessage() throws IOException {
-        String[] args =new String[]{"-t", "gett", "-k", "1"};
+        String[] args = new String[]{"-t", "gett", "-k", "1"};
         new ClientController(printer).send(args);
         verify(printer, times(3)).printInfo(argCaptor.capture());
         List<String> clientOutput = argCaptor.getAllValues();

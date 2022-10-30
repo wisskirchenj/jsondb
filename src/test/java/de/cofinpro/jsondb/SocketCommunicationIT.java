@@ -102,19 +102,21 @@ class SocketCommunicationIT {
 
     @Test
     void whenClientReadsSetNestedKey_SetStoresNestedJson() throws IOException {
-        String[] args = new String[]{"-in", "set.json"};
+        String[] args = new String[]{"-t", "delete", "-k", "17"};
+        new ClientController(printer).send(args);
+        args = new String[]{"-in", "set.json"};
         new ClientController(printer).send(args);
         args = new String[]{"-t", "get", "-k", "17"};
         new ClientController(printer).send(args);
-        verify(printer, times(6)).printInfo(argCaptor.capture());
+        verify(printer, times(9)).printInfo(argCaptor.capture());
         List<String> clientOutput = argCaptor.getAllValues();
         assertEquals(STARTED_MSG, clientOutput.get(0));
-        assertEquals(SENT_MSG_TEMPLATE.formatted("{\"type\":\"set\",\"key\":[\"17\", \"very_new\"],\"value\":\"222 what up?\"}"),
-                clientOutput.get(1));
+        assertEquals(SENT_MSG_TEMPLATE.formatted("{\"type\":\"set\",\"key\":[\"17\", \"new_one\"],\"value\":\"a new value\"}"),
+                clientOutput.get(4));
         assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
-                clientOutput.get(2));
-        assertEquals(VALUE_RESPONSE_TEMPLATE.formatted("{\"very_new\":\"222 what up?\"}"),
                 clientOutput.get(5));
+        assertEquals(VALUE_RESPONSE_TEMPLATE.formatted("{\"new_one\":\"a new value\"}"),
+                clientOutput.get(8));
     }
 
 

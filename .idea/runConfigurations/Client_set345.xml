@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Client set345" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="de.cofinpro.jsondb.client.Main" />
-    <module name="jsondb.main" />
+    <module name="de.cofinpro.jsondb.main" />
     <option name="PROGRAM_PARAMETERS" value="-t set -k 345 -v &quot;Hello   f***ing World!&quot;" />
     <extension name="coverage">
       <pattern>

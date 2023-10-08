@@ -2,7 +2,7 @@
   <configuration default="false" name="Client input get" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="de.cofinpro.jsondb.client.Main" />
     <module name="jsondb.main" />
-    <option name="PROGRAM_PARAMETERS" value="-in get.json" />
+    <option name="PROGRAM_PARAMETERS" value="--help" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="de.cofinpro.jsondb.server.*" />

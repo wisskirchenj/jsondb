@@ -5,6 +5,7 @@ import de.cofinpro.jsondb.client.controller.ClientController;
 import de.cofinpro.jsondb.io.ConsolePrinter;
 import de.cofinpro.jsondb.io.json.GsonPooled;
 import de.cofinpro.jsondb.server.controller.ServerController;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -18,8 +19,12 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Slf4j
 class ConcurrentFileKeyStorageAccessIT {
 
+    // ServerSocket's maximum queue size for ACCEPT is 50 incoming connections, and any past that are blocked
+    // https://stackoverflow.com/questions/10131377/how-to-set-maximum-queue-size-for-server-socket
+    public static final int THREADS = 25;
     static ServerController server;
     static final Path DB_PATH = Path.of("src/main/resources/server/data/db.json");
     ClientController client = new ClientController(new ConsolePrinter());
@@ -51,7 +56,7 @@ class ConcurrentFileKeyStorageAccessIT {
     @Test
     void whenManyConcurrentClientThreads_ReentrantReadWriteLockWorks() throws IOException, InterruptedException {
         Instant before = Instant.now();
-        IntStream.rangeClosed(1, 25).forEach(n -> {
+        IntStream.rangeClosed(1, THREADS).forEach(n -> {
             startSetClient(n);
             startGetClients(n);
         });
@@ -59,22 +64,22 @@ class ConcurrentFileKeyStorageAccessIT {
         Thread.sleep(200);
         Map<String, String> database = GsonPooled.getGson().fromJson(Files.readString(DB_PATH),
                 new TypeToken<Map<String, String>>(){}.getType());
-        assertEquals(25, database.size());
+        assertEquals(THREADS, database.size());
     }
 
     void startSetClient(int count) {
-        new Thread(() -> {
+        Thread.ofVirtual().start(() -> {
             try {
                 client.send(new String[] {"-t", "set", "-k", "test%d".formatted(count), "-v", String.valueOf(count)});
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }).start();
+        });
     }
 
 
     void startGetClients(int count) {
-        new Thread(() -> {
+        Thread.ofVirtual().start(() -> {
             try {
                 client.send(new String[] {"-t", "get", "-k", "test%d".formatted(count)});
                 client.send(new String[] {"-t", "get", "-k", "test1_%d".formatted(count)});
@@ -82,6 +87,6 @@ class ConcurrentFileKeyStorageAccessIT {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }).start();
+        });
     }
 }

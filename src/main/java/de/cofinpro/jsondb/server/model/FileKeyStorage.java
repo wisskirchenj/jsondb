@@ -2,7 +2,6 @@ package de.cofinpro.jsondb.server.model;
 
 import com.google.gson.reflect.TypeToken;
 import de.cofinpro.jsondb.io.json.DatabaseResponse;
-import de.cofinpro.jsondb.io.json.GsonPooled;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -19,6 +18,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
 
+import static de.cofinpro.jsondb.io.json.GsonPooled.POOLED;
 import static de.cofinpro.jsondb.server.config.MessageResourceBundle.ERROR_MSG;
 import static de.cofinpro.jsondb.server.config.MessageResourceBundle.OK_MSG;
 
@@ -167,13 +167,13 @@ public class FileKeyStorage implements KeyStorage {
     }
 
     private Map<String, Object> readDatabaseAsMap() throws IOException {
-        return GsonPooled.getGson()
+        return POOLED.gson()
                 .fromJson(Files.readString(DB_PATH), new TypeToken<Map<String, Object>>(){}.getType());
     }
 
     private void writeDatabase(Map<String, Object> dataBase) throws IOException {
         try (OutputStream output = Files.newOutputStream(DB_PATH)) {
-            output.write(GsonPooled.getGson().toJson(dataBase).getBytes());
+            output.write(POOLED.gson().toJson(dataBase).getBytes());
         }
     }
 

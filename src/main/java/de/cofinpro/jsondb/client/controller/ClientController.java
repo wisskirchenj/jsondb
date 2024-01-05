@@ -3,7 +3,6 @@ package de.cofinpro.jsondb.client.controller;
 import com.beust.jcommander.JCommander;
 import de.cofinpro.jsondb.io.ConsolePrinter;
 import de.cofinpro.jsondb.io.json.DatabaseCommand;
-import de.cofinpro.jsondb.io.json.GsonPooled;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -16,6 +15,7 @@ import java.util.List;
 
 import static de.cofinpro.jsondb.client.config.MessageResourceBundle.*;
 import static de.cofinpro.jsondb.io.SocketConfig.*;
+import static de.cofinpro.jsondb.io.json.GsonPooled.POOLED;
 
 /**
  * controller class that is called by client's main via send() entry point.
@@ -59,7 +59,7 @@ public class ClientController {
                 .parse(args);
         replaceListsByString(command);
         return command.getInputFilename() == null
-                ? GsonPooled.getGson().toJson(command)
+                ? POOLED.gson().toJson(command)
                 : Files.readString(Path.of(CLIENT_DATA_PATH + command.getInputFilename())).trim();
     }
 

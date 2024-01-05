@@ -3,7 +3,6 @@ package de.cofinpro.jsondb;
 import com.google.gson.reflect.TypeToken;
 import de.cofinpro.jsondb.client.controller.ClientController;
 import de.cofinpro.jsondb.io.ConsolePrinter;
-import de.cofinpro.jsondb.io.json.GsonPooled;
 import de.cofinpro.jsondb.server.controller.ServerController;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
@@ -17,6 +16,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import static de.cofinpro.jsondb.io.json.GsonPooled.POOLED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
@@ -62,7 +62,7 @@ class ConcurrentFileKeyStorageAccessIT {
         });
         System.out.printf("Starting took %d milliseconds", Instant.now().toEpochMilli() - before.toEpochMilli());
         Thread.sleep(200);
-        Map<String, String> database = GsonPooled.getGson().fromJson(Files.readString(DB_PATH),
+        Map<String, String> database = POOLED.gson().fromJson(Files.readString(DB_PATH),
                 new TypeToken<Map<String, String>>(){}.getType());
         assertEquals(THREADS, database.size());
     }

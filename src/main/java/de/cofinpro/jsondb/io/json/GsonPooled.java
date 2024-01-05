@@ -4,18 +4,20 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
- * singleton wrapper (eagerly initialized since definitely needed right away) to an application-wide
+ * Enum singleton wrapper to an application-wide
  * shared Gson object (which is thread-safe).
  */
-public class GsonPooled {
+public enum GsonPooled {
 
-    private static final Gson GSON = new GsonBuilder().create();
+    POOLED;
 
-    private GsonPooled() {
-        // no instances - implements singleton access to Gson object
+    private final Gson gson;
+
+    GsonPooled() {
+        this.gson = new GsonBuilder().create();
     }
 
-    public static Gson getGson() {
-        return GSON;
+    public Gson gson() {
+        return this.gson;
     }
 }

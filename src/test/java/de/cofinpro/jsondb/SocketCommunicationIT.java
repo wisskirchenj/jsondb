@@ -4,7 +4,6 @@ import de.cofinpro.jsondb.client.controller.ClientController;
 import de.cofinpro.jsondb.io.ConsolePrinter;
 import de.cofinpro.jsondb.io.json.DatabaseCommand;
 import de.cofinpro.jsondb.io.json.DatabaseResponse;
-import de.cofinpro.jsondb.io.json.GsonPooled;
 import de.cofinpro.jsondb.server.config.MessageResourceBundle;
 import de.cofinpro.jsondb.server.controller.ServerController;
 import org.junit.jupiter.api.AfterAll;
@@ -19,9 +18,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.IOException;
 import java.util.List;
 
-import static de.cofinpro.jsondb.client.config.MessageResourceBundle.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static de.cofinpro.jsondb.client.config.MessageResourceBundle.RECEIVED_MSG_TEMPLATE;
+import static de.cofinpro.jsondb.client.config.MessageResourceBundle.SENT_MSG_TEMPLATE;
+import static de.cofinpro.jsondb.client.config.MessageResourceBundle.STARTED_MSG;
+import static de.cofinpro.jsondb.io.json.GsonPooled.POOLED;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class SocketCommunicationIT {
@@ -64,10 +68,10 @@ class SocketCommunicationIT {
         verify(printer, times(3)).printInfo(argCaptor.capture());
         List<String> clientOutput = argCaptor.getAllValues();
         assertEquals(STARTED_MSG, clientOutput.get(0));
-        assertEquals(SENT_MSG_TEMPLATE.formatted(GsonPooled.getGson()
+        assertEquals(SENT_MSG_TEMPLATE.formatted(POOLED.gson()
                         .toJson(new DatabaseCommand("get", "1", null))),
                 clientOutput.get(1));
-        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.error())),
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(POOLED.gson().toJson(DatabaseResponse.error())),
                 clientOutput.get(2));
     }
 
@@ -79,9 +83,9 @@ class SocketCommunicationIT {
         List<String> clientOutput = argCaptor.getAllValues();
         assertEquals(STARTED_MSG, clientOutput.get(0));
         DatabaseCommand command = new DatabaseCommand("set", "17", "hi there!");
-        assertEquals(SENT_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(command)),
+        assertEquals(SENT_MSG_TEMPLATE.formatted(POOLED.gson().toJson(command)),
                 clientOutput.get(1));
-        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(POOLED.gson().toJson(DatabaseResponse.ok())),
                 clientOutput.get(2));
     }
 
@@ -93,9 +97,9 @@ class SocketCommunicationIT {
         List<String> clientOutput = argCaptor.getAllValues();
         assertEquals(STARTED_MSG, clientOutput.get(0));
         DatabaseCommand command = new DatabaseCommand("delete", "new", null);
-        assertEquals(SENT_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(command)),
+        assertEquals(SENT_MSG_TEMPLATE.formatted(POOLED.gson().toJson(command)),
                 clientOutput.get(1));
-        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.error())),
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(POOLED.gson().toJson(DatabaseResponse.error())),
                 clientOutput.get(2));
     }
 
@@ -113,7 +117,7 @@ class SocketCommunicationIT {
         assertEquals(STARTED_MSG, clientOutput.get(0));
         assertEquals(SENT_MSG_TEMPLATE.formatted("{\"type\":\"set\",\"key\":[\"17\", \"new_one\"],\"value\":\"a new value\"}"),
                 clientOutput.get(4));
-        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(POOLED.gson().toJson(DatabaseResponse.ok())),
                 clientOutput.get(5));
         assertEquals(VALUE_RESPONSE_TEMPLATE.formatted("{\"new_one\":\"a new value\"}"),
                 clientOutput.get(8));
@@ -130,9 +134,9 @@ class SocketCommunicationIT {
         new ClientController(printer).send(args);
         verify(printer, times(9)).printInfo(argCaptor.capture());
         List<String> clientOutput = argCaptor.getAllValues();
-        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(POOLED.gson().toJson(DatabaseResponse.ok())),
                 clientOutput.get(2));
-        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(POOLED.gson().toJson(DatabaseResponse.ok())),
                 clientOutput.get(5));
         assertTrue(clientOutput.get(8).contains("\"new_one\":\"a new value\""));
         assertTrue(clientOutput.get(8).contains("\"very_new\":\"222 what up?\""));
@@ -148,7 +152,7 @@ class SocketCommunicationIT {
         new ClientController(printer).send(args);
         verify(printer, times(9)).printInfo(argCaptor.capture());
         List<String> clientOutput = argCaptor.getAllValues();
-        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(POOLED.gson().toJson(DatabaseResponse.ok())),
                 clientOutput.get(5));
         assertTrue(clientOutput.get(8).contains("\"complex\":\"true\""));
         assertEquals(VALUE_RESPONSE_TEMPLATE.formatted("{\"attrib\":{\"complex\":\"true\"}}"), clientOutput.get(8));
@@ -172,9 +176,9 @@ class SocketCommunicationIT {
         List<String> clientOutput = argCaptor.getAllValues();
         assertEquals(VALUE_RESPONSE_TEMPLATE.formatted("\"222 what up?\""),
                 clientOutput.get(8));
-        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.ok())),
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(POOLED.gson().toJson(DatabaseResponse.ok())),
                 clientOutput.get(11));
-        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(DatabaseResponse.error())),
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(POOLED.gson().toJson(DatabaseResponse.error())),
                 clientOutput.get(14));
         assertEquals(VALUE_RESPONSE_TEMPLATE.formatted("{}"), clientOutput.get(17));
     }
@@ -186,10 +190,10 @@ class SocketCommunicationIT {
         verify(printer, times(3)).printInfo(argCaptor.capture());
         List<String> clientOutput = argCaptor.getAllValues();
         assertEquals(STARTED_MSG, clientOutput.get(0));
-        assertEquals(SENT_MSG_TEMPLATE.formatted(GsonPooled.getGson()
+        assertEquals(SENT_MSG_TEMPLATE.formatted(POOLED.gson()
                         .toJson(new DatabaseCommand("gett", "1", null))),
                 clientOutput.get(1));
-        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(GsonPooled.getGson().toJson(new DatabaseResponse(
+        assertEquals(RECEIVED_MSG_TEMPLATE.formatted(POOLED.gson().toJson(new DatabaseResponse(
                 MessageResourceBundle.ERROR_MSG, null, MessageResourceBundle.INVALID_REQUEST_MSG))),
                 clientOutput.get(2));
     }

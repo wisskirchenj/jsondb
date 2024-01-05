@@ -3,7 +3,6 @@ package de.cofinpro.jsondb.server.controller;
 import de.cofinpro.jsondb.io.ConsolePrinter;
 import de.cofinpro.jsondb.io.json.DatabaseCommand;
 import de.cofinpro.jsondb.io.json.DatabaseResponse;
-import de.cofinpro.jsondb.io.json.GsonPooled;
 import de.cofinpro.jsondb.server.model.FileKeyStorage;
 import de.cofinpro.jsondb.server.model.KeyStorage;
 
@@ -17,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static de.cofinpro.jsondb.io.json.GsonPooled.POOLED;
 import static de.cofinpro.jsondb.server.config.MessageResourceBundle.*;
 import static de.cofinpro.jsondb.io.SocketConfig.*;
 
@@ -98,7 +98,7 @@ public class ServerController {
         Socket client = server.accept();
         String clientRequest = new DataInputStream(client.getInputStream()).readUTF();
         printer.printInfo(RECEIVED_MSG_TEMPLATE.formatted(clientRequest));
-        DatabaseCommand command = GsonPooled.getGson().fromJson(clientRequest, DatabaseCommand.class);
+        DatabaseCommand command = POOLED.gson().fromJson(clientRequest, DatabaseCommand.class);
         executor.submit(() -> {
             try {
                 answerClientRequest(client, command);
@@ -125,7 +125,7 @@ public class ServerController {
             case "exit" -> DatabaseResponse.ok();
             default -> new DatabaseResponse(ERROR_MSG, null, INVALID_REQUEST_MSG);
         };
-        new DataOutputStream(client.getOutputStream()).writeUTF(GsonPooled.getGson().toJson(answer));
+        new DataOutputStream(client.getOutputStream()).writeUTF(POOLED.gson().toJson(answer));
         printer.printInfo(SENT_MSG_TEMPLATE.formatted(answer));
     }
 }

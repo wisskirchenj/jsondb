@@ -71,7 +71,7 @@ public class FileKeyStorage implements KeyStorage {
             parent.put(keyList.get(i), map);
             parent = map;
         }
-        parent.put(keyList.get(keyList.size() - 1), value);
+        parent.put(keyList.getLast(), value);
         return database;
     }
 
@@ -163,7 +163,7 @@ public class FileKeyStorage implements KeyStorage {
                 return null;
             }
         }
-        return command.apply(parent, keyList.get(keyList.size() - 1));
+        return command.apply(parent, keyList.getLast());
     }
 
     private Map<String, Object> readDatabaseAsMap() throws IOException {

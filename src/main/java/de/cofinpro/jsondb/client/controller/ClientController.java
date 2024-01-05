@@ -68,10 +68,10 @@ public class ClientController {
      * Jcommander passes a single string as List<String>. This method checks and corrects that.
      */
     private void replaceListsByString(DatabaseCommand command) {
-        if (command.getValue() instanceof List<?> list && list.get(0) instanceof String value) {
+        if (command.getValue() instanceof List<?> list && list.getFirst() instanceof String value) {
             command.setValue(value);
         }
-        if (command.getKey() instanceof List<?> list && list.get(0) instanceof String key) {
+        if (command.getKey() instanceof List<?> list && list.getFirst() instanceof String key) {
             command.setKey(key);
         }
     }
